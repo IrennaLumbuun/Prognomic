@@ -25,7 +25,7 @@ def handle_image(image):
     images = list()  # replace with a list of cropped & resized image
 
     # pass to model
-    model = load_model('./trained_dataset.h5')
+    model = load_model('backend/trained_dataset.h5')
     result = ["cat", "bulk", "crossed"]
     for img in images:
         output = model.predict(img)
@@ -41,9 +41,9 @@ def get_crop_boundary(eyes_pos):
         # left eye
         if pos.get('left_eye', None) != None:
             # left eye exists
-            upper_left_left_eye = [pos.get('left_eye_left_corner')[
+            upper_left_left_eye = [pos.get('left_eye_left_corner', 0)[
                 'x'], pos.get('left_eye_top_boundary', 0)['y']]
-            bottom_right_left_eye = [pos.get('left_eye_right_corner')[
+            bottom_right_left_eye = [pos.get('left_eye_right_corner', 0)[
                 'x'], pos.get('left_eye_bottom_boundary', 0)['y']]
         # right eye
         if pos.get('right_eye', None) != None:
