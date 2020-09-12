@@ -16,17 +16,6 @@ firebase = pyrebase.initialize_app(config)
 
 db = firebase.database()
 
-'''db.child("users").push({
-						"id": str(uuid.uuid1()),
-						"username": "schiriac", 
-						"firstname": "Simona",
-						"lastname": "Chiriac",
-						"email": "chirita.alexandra.upb@gmail.com",
-						"password": "plane",
-						"age": "30",
-						})'''
-#users = db.child("users").get()
-#print(users.val())
 
 app = Flask(__name__)
 
@@ -34,7 +23,7 @@ app = Flask(__name__)
 def welcome():
 	return 'Hello, user!'
 
-@app.route("/register", methods=['POST'])
+@app.route("/register", methods=['POST', 'GET'])
 def register():
 	idx = str(uuid.uuid1())
 	username = request.args.get('username')
@@ -52,9 +41,22 @@ def register():
 						"password": password,
 						"age": age,
 						})
+	return "Post succeded"
 
 @app.route("/login", methods=['GET'])
 def login():
 	
+	users = db.child("users").get()
+	username = request.args.get('username')
+	password = request.args.get('password')
+	users = db.child("users").get()
+	result = users.val()
+
+	for k,v in result.items():
+		if str(v["username"]) == username and str(v["password"]) == password:
+			return v
+
+	return "Login Failed"
+
 if __name__ == '__main__':
 	app.run(debug=True)
