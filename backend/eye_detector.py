@@ -57,7 +57,7 @@ def get_crop_boundary(eyes_pos):
             bound.append(bottom_right_left_eye)
             bound.append(upper_left_right_eye)
             bound.append(bottom_right_right_eye)
-            if len(bound != [] and len(bound) % 2 == 0):
+            if bound != [] and len(bound) % 2 == 0:
                 crop_boundary.append(bound)
     return crop_boundary
 
