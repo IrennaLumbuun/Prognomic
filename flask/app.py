@@ -1,6 +1,8 @@
 import pyrebase
 import uuid
 from flask import *
+
+# Authentication data for Firebase
 config = {
 	"apiKey": "AIzaSyChXIzSdDfONoykC2TnHYAlirUiWZ5cN10",
     "authDomain": "docassist-b11a1.firebaseapp.com",
@@ -16,13 +18,14 @@ firebase = pyrebase.initialize_app(config)
 
 db = firebase.database()
 
-
+#Start Flask app
 app = Flask(__name__)
 
 @app.route("/", methods=['GET', 'POST'])
 def welcome():
 	return 'Hello, user!'
 
+# Add a new user
 @app.route("/register", methods=['POST', 'GET'])
 def register():
 	idx = str(uuid.uuid1())
@@ -43,6 +46,7 @@ def register():
 						})
 	return "Post succeded"
 
+#Return data about user at login
 @app.route("/login", methods=['GET'])
 def login():
 	
