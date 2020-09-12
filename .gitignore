@@ -1,1 +1,4 @@
 env/
+
+# secret
+credentials.json
