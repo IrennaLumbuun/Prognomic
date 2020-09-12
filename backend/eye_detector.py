@@ -1,9 +1,9 @@
 import sys
 import json
 from keras.models import load_model
-#import cv2
-#import numpy as np
-#from PIL import Image
+from PIL import Image
+import cv2
+import numpy as np
 
 # Imports the Google Cloud client library
 from google.cloud import vision
@@ -13,25 +13,50 @@ client = vision.ImageAnnotatorClient()
 
 
 def handle_image(image):
-    # save nd array
-    # convert to b64
+    img_copy = image  # safe a copy of the image for future use (e.g cropping)
+    b64_image = image.read()  # decoded image
 
     # get_eyes position
-    eyes_pos = get_eyes()
+    eyes_pos = get_eyes(b64_image)
+
+    # crop boundary consits of [(upper left left eye), (bottom right right eye), (upper left right eye), {bottom right tight eye}]
     crop_boundary = get_crop_boundary(eyes_pos)
 
-    # crop image
-    # reshape to 151 x 323
     images = list()  # replace with a list of cropped & resized image
 
+    # crop image and reshape images
+    im = Image.open(img_copy)
+    for bounds in crop_boundary:
+        # crop
+        left_eye = im.crop((bounds[0][0], bounds[0][1],
+                            bounds[1][0], bounds[1][1]))
+        # resize & convert to grayscale
+        left_eye = np.array(left_eye)
+        left_eye = cv2.cvtColor(left_eye, cv2.COLOR_BGR2GRAY)
+        left_eye = cv2.resize(left_eye, (151, 332))
+
+        images.append(left_eye)
+        if len(bounds) == 4:
+            right_eye = im.crop((
+                bounds[2][0], bounds[2][1], bounds[3][0], bounds[3][1]))
+            # resize & convert to grayscale
+            right_eye = np.array(right_eye)
+            right_eye = cv2.cvtColor(right_eye, cv2.COLOR_BGR2GRAY)
+            right_eye = cv2.resize(right_eye, (151, 332))
+
     # pass to model
-    model = load_model('./trained_dataset.h5')
-    result = ["cat", "bulk", "crossed"]
+    model = load_model('backend/trained_dataset.h5')
+    interpret = ["cat", "bulk", "crossed"]
+    result = dict()
     for img in images:
+        img = img.reshape((1, 50132)).tolist()
+        print(len(img))
         output = model.predict(img)
-        print(output)
-        print(result[output])
-        # we only care if it catarract or not catarract
+        output = output.flatten().tolist()
+        for i in range(len(interpret)):
+            result[interpret[i]] = output[i]
+        print(result)
+    return result
 
 
 def get_crop_boundary(eyes_pos):
@@ -62,14 +87,14 @@ def get_crop_boundary(eyes_pos):
     return crop_boundary
 
 
-def get_eyes():
-    # request placeholder
+def get_eyes(b64_image):
     request = {
         'image': {
-            'source': {
-                'image_uri': 'https://preview.redd.it/4t5n1ynrhjm51.jpg?width=720&format=pjpg&auto=webp&s=a7f4c3d0af3b405126ed11c5c5dee0bb8f84ec25'
-            },
+            'content': b64_image
         },
+        'features': [{
+            'type': vision.enums.Feature.Type.FACE_DETECTION
+        }]
     }
     # parse response
     response = client.annotate_image(request)
@@ -98,7 +123,3 @@ def get_eyes():
             return eyes_pos
 
     return eyes_pos
-
-
-print("----------------------")
-handle_image(None)

@@ -30,7 +30,7 @@ def train():
     )
 
     data = pd.read_csv('./eye_dataset.csv')
-    data.sample(frac=1)
+    data = data.sample(frac=1)
     x_train = data.iloc[:, 1:]
     le = preprocessing.LabelEncoder()
     y_train = le.fit_transform(list(data["Type"]))
