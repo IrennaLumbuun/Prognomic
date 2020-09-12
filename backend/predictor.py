@@ -2,10 +2,9 @@
 
 from keras.models import Sequential
 from keras.layers import Dense  # standard multi-connexted layer
-from keras.utils.np_utils import to_categorical
 from sklearn import preprocessing
-import numpy as np
 import pandas as pd
+from keras.utils.np_utils import to_categorical
 
 
 def train():
@@ -20,7 +19,7 @@ def train():
     # another option is to make a shallow but wide network
     model.add(Dense(16, activation="relu"))
     model.add(Dense(8, activation="relu"))
-    model.add(Dense(1, activation="softmax"))
+    model.add(Dense(3, activation="softmax"))
     # output is [0, 0, 0]
     # where each col represents the probability of the user having said condition
 
@@ -35,11 +34,12 @@ def train():
     x_train = data.iloc[:, 1:]
     le = preprocessing.LabelEncoder()
     y_train = le.fit_transform(list(data["Type"]))
+    y_train = to_categorical(y_train)
 
     model.fit(
         x_train,
         y_train,
-        epochs=100,
+        epochs=1000,
         validation_split=0.2
     )
 

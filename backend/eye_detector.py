@@ -1,5 +1,6 @@
 import sys
 import json
+from keras.models import load_model
 #import cv2
 #import numpy as np
 #from PIL import Image
@@ -20,8 +21,17 @@ def handle_image(image):
     crop_boundary = get_crop_boundary(eyes_pos)
 
     # crop image
+    # reshape to 151 x 323
+    images = list()  # replace with a list of cropped & resized image
 
     # pass to model
+    model = load_model('./trained_dataset.h5')
+    result = ["cat", "bulk", "crossed"]
+    for img in images:
+        output = model.predict(img)
+        print(output)
+        print(result[output])
+        # we only care if it catarract or not catarract
 
 
 def get_crop_boundary(eyes_pos):
