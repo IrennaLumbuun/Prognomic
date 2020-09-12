@@ -4,6 +4,7 @@ from keras.models import load_model
 from PIL import Image
 import cv2
 import numpy as np
+import base64
 
 # Imports the Google Cloud client library
 from google.cloud import vision
@@ -50,8 +51,10 @@ def handle_image(image):
     for img in images:
         img = img.reshape((1, 50132)).tolist()
         output = model.predict(img)
+        print(output)
         output = output.flatten().tolist()
         for i in range(len(interpret)):
             result[interpret[i]] = output[i]
         print(result)
+
     return result

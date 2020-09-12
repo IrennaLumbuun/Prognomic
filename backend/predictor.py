@@ -39,7 +39,7 @@ def train():
     model.fit(
         x_train,
         y_train,
-        epochs=1000,
+        epochs=100,
         validation_split=0.2
     )
 
