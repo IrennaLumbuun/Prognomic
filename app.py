@@ -2,6 +2,7 @@ import pyrebase
 import uuid
 from flask import *
 from backend.eye_detector import handle_image
+import base64
 
 # Authentication data for Firebase
 config = {
@@ -75,8 +76,8 @@ def get_user_from_username(username):
     users = db.child("users").get()
     for k, v in users.val().items():
         if str(v.get("username", "")) == username:
-            return v
-    return dict()
+            return k, v
+    return None, dict()
 
 
 # Retrieve information to show on health report
@@ -86,7 +87,7 @@ def get_report():
     username = body.get('username', '')
 
     # get users info
-    user = get_user_from_username(username)
+    _, user = get_user_from_username(username)
     if user == {}:
         return "User not found"
     else:
@@ -104,8 +105,8 @@ def get_report():
 # Apply model for cataract, crossed eye, bulk eye
 @ app.route("/upload", methods=['POST'])
 def post_eye_abnormality():
-    body = request.json
-    username = body.get("username", "")
+    body = request.form.to_dict(flat=False)
+    username = body.get("username", [""])[0]
 
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -120,10 +121,14 @@ def post_eye_abnormality():
             return 'Extension is not valid. Only allow .png, .jpg, and .jpeg'
 
         if user_photo and valid_extension:
-            output = handle_image(user_photo)
+            b64_image, output = handle_image(user_photo)
             # output is a list consisting of probability that the person has abnormal eye congition
             if len(output) > 0:
                 # save output
+                key, user = get_user_from_username(username)
+                user['analysis'] = output
+                user['picture'] = base64.b64encode(b64_image).decode('utf-8')
+                db.child("users").child(key).set(user)
                 return output
             else:
                 return "Can't find an eye in the picture."
