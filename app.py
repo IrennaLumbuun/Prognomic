@@ -5,6 +5,7 @@ from flask import *
 from flask_cors import CORS, cross_origin
 from backend.eye_detector import handle_image
 import base64
+import json
 
 # twilio
 from backend.twilio_credentials import account_sid, auth_token, twilio_cell
@@ -41,7 +42,7 @@ def welcome():
     return app.send_static_file('index.html')
 
 # Add a new user
-@app.route("/register", methods=['POST'])
+@app.route("/register", methods=['POST', 'GET'])
 def register():
     idx = str(uuid.uuid1())
     username = request.args.get('username')
@@ -68,8 +69,6 @@ def register():
     return "Success", 200
 
 # Return data about user at login
-
-
 @app.route("/login", methods=['GET'])
 def login():
     username = request.args.get('username')
@@ -84,8 +83,6 @@ def login():
     return "Failed", failcode
 
 # helper method
-
-
 def get_user_from_username(username):
     users = db.child("users").get()
     for k, v in users.val().items():
@@ -116,8 +113,6 @@ def get_report():
         }
 
 # send notification to the doctor when users upload picture
-
-
 def send_notification(phone_number, first_name, last_name):
     patient_name = f'{first_name} {last_name}'
 
@@ -129,10 +124,9 @@ def send_notification(phone_number, first_name, last_name):
         )
     return 200
 
+
 # Apply model for cataract, crossed eye, bulk eye
-
-
-@ app.route("/upload", methods=['POST'])
+@app.route("/upload", methods=['POST'])
 def post_eye_abnormality():
     body = request.form.to_dict(flat=False)
     username = body.get("username", [""])[0]
@@ -175,10 +169,27 @@ def allowed_file(filename) -> bool:
         filename.rsplit('.', 1)[1].lower() in _allowed_extensions
 
 
-@app.route("/send_report", methods=['POST'])
-def send_report():
-    # do something
-    return
+@app.route("/receive_text", methods=['POST', 'GET'])
+def handle_text_message():
+    message_body = request.values.get('Body', None)
+    resp = MessagingResponse()
+
+    if len(message_body) > 0:
+        _, user = get_user_from_username(message_body)
+        if user != {}:
+            base64_pic = user.get('picture', None).encode('UTF-8')
+            if base64_pic != None:
+                with open('mock_data/temp.jpeg', 'wb') as f:
+                    f.write(base64.decodestring(base64_pic))
+            # return their report
+            reply = json.dumps(user['analysis'], sort_keys=True, indent=4)
+            msg = resp.message(f'\nAnalysis: \n{reply}')
+            msg.media('http://farm2.static.flickr.com/1075/1404618563_3ed9a44a3a.jpg')
+            return str(resp)
+        resp.message("Can't find user")
+        return str(resp)
+    resp.message("Sorry, I'm not sure how to do that.")
+    return str(resp)
 
 
 if __name__ == '__main__':
