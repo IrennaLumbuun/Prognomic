@@ -37,6 +37,7 @@ protobuf==3.13.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycryptodome==3.4.3
+PyJWT==1.7.1
 Pyrebase==3.0.27
 python-dateutil==2.8.1
 python-jwt==2.0.1
@@ -56,6 +57,7 @@ tensorflow==2.3.0
 tensorflow-estimator==2.3.0
 termcolor==1.1.0
 threadpoolctl==2.1.0
+twilio==6.45.1
 urllib3==1.25.10
 Werkzeug==1.0.1
 wrapt==1.12.1
