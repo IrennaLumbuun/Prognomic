@@ -26,3 +26,6 @@ Doctor portal
 - (Optional) Activate environment `source env/bin/activate`
 - Install requirements `pip3 install -r requirements.txt`
 - Run `Flask run`
+
+## Demo Link:
+- http://techack.pythonanywhere.com/
