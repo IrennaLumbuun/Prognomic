@@ -68,26 +68,45 @@ def login():
 
     return "Login Failed"
 
-# Retrieve information to show on health report
+# helper method
 
 
-@app.route("/report", methods=["GET"])
-def get_report():
-    body = request.json
-    print(body)
-    username = body['username']
-
-    # get users info
+def get_user_from_username(username):
     users = db.child("users").get()
     for k, v in users.val().items():
         if str(v.get("username", "")) == username:
             return v
-    return "User Not Found"
+    return dict()
+
+
+# Retrieve information to show on health report
+@app.route("/report", methods=["GET"])
+def get_report():
+    body = request.json
+    username = body.get('username', '')
+
+    # get users info
+    user = get_user_from_username(username)
+    if user == {}:
+        return "User not found"
+    else:
+        return {
+            "age": user.get("age", None),
+            "gender": user.get("gender", None),
+            "email": user.get("email", None),
+            "firstname": user.get("firstname", None),
+            "lastname": user.get("lastname", None),
+            "picture": user.get("picture", None),
+            "analysis": user.get("analysis", None),
+        }
 
 
 # Apply model for cataract, crossed eye, bulk eye
-@app.route("/upload", methods=['POST'])
+@ app.route("/upload", methods=['POST'])
 def post_eye_abnormality():
+    body = request.json
+    username = body.get("username", "")
+
     if request.method == 'POST':
         if 'file' not in request.files:
             return "No files selected"
@@ -104,6 +123,7 @@ def post_eye_abnormality():
             output = handle_image(user_photo)
             # output is a list consisting of probability that the person has abnormal eye congition
             if len(output) > 0:
+                # save output
                 return output
             else:
                 return "Can't find an eye in the picture."
