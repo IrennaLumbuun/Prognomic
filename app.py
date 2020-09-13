@@ -1,6 +1,7 @@
 import pyrebase
 import uuid
 from flask import *
+from flask_cors import CORS, cross_origin
 from backend.eye_detector import handle_image
 
 # Authentication data for Firebase
@@ -20,25 +21,30 @@ firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
 # Start Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+failcode = 290
 
-
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=['GET'])
 def welcome():
-    return 'Hello, user!'
+    return app.send_static_file('index.html')
 
 # Add a new user
-
-
-@app.route("/register", methods=['POST', 'GET'])
+@app.route("/register", methods=['POST'])
 def register():
     idx = str(uuid.uuid1())
     username = request.args.get('username')
+    password = request.args.get('password')
+
+    if username is None or password is None:
+        return "Invalid", failcode
+
     firstname = request.args.get('firstname')
     lastname = request.args.get('lastname')
     email = request.args.get('email')
-    password = request.args.get('password')
     age = request.args.get('age')
+    
     db.child("users").push({
         "id": idx,
         "username": username,
@@ -48,15 +54,14 @@ def register():
         "password": password,
         "age": age,
     })
-    return "Post succeded"
+    
+    return "Success", 200
 
 # Return data about user at login
 
 
 @app.route("/login", methods=['GET'])
 def login():
-
-    users = db.child("users").get()
     username = request.args.get('username')
     password = request.args.get('password')
     users = db.child("users").get()
@@ -64,9 +69,9 @@ def login():
 
     for k, v in result.items():
         if str(v["username"]) == username and str(v["password"]) == password:
-            return v
+            return v, 200
 
-    return "Login Failed"
+    return "Failed", failcode
 
 
 # Apply model for cataract, crossed eye, bulk eye
@@ -74,24 +79,25 @@ def login():
 def post_eye_abnormality():
     if request.method == 'POST':
         if 'file' not in request.files:
-            return "No files selected"
+            return "No files selected", failcode
 
         user_photo = request.files['file']
         if user_photo.filename == '':
-            return "No photo selected"
+            return "No photo selected", failcode
 
         valid_extension = allowed_file(user_photo.filename)
         if not valid_extension:
-            return 'Extension is not valid. Only allow .png, .jpg, and .jpeg'
+            return 'Extension is not valid. Only allow .png, .jpg, and .jpeg', failcode
 
         if user_photo and valid_extension:
             output = handle_image(user_photo)
             # output is a list consisting of probability that the person has abnormal eye congition
             if len(output) > 0:
-                return output
+                return output, 200
             else:
-                return "Can't find an eye in the picture."
-    return 404  # error
+                return "Can't find an eye in the picture.", failcode
+
+    return "Invalid operation", failcode  # error
 
 
 def allowed_file(filename) -> bool:
