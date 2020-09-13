@@ -49,16 +49,20 @@ def handle_image(image):
 
     # pass to model
     model = load_model('backend/trained_dataset.h5')
-    interpret = ["cat", "bulk", "crossed"]
-    result = dict()
+    result = {
+        "crossed eye or cataract": ""
+    }
     for img in images:
         img = img.reshape((1, 50132)).tolist()
-        print(len(img))
         output = model.predict(img)
         output = output.flatten().tolist()
-        for i in range(len(interpret)):
-            result[interpret[i]] = output[i]
-        print(result)
+        if output[0] > 0.9 or output[1] > 0.9 or output[2] > 0.9:
+            result['crossed eye or cataract'] = 'Very Likely'
+        elif output[0] > 0.8 or output[1] > 0.8 or output[2] > 0.8:
+            result['crossed eye or cataract'] = 'Likely'
+        else:
+            result['crossed eye or cataract'] = 'Unlikely'
+
     return result
 
 
