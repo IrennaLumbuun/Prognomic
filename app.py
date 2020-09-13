@@ -68,9 +68,25 @@ def login():
 
     return "Login Failed"
 
+# Retrieve information to show on health report
+
+
+@app.route("/report", methods=["GET"])
+def get_report():
+    body = request.json
+    print(body)
+    username = body['username']
+
+    # get users info
+    users = db.child("users").get()
+    for k, v in users.val().items():
+        if str(v.get("username", "")) == username:
+            return v
+    return "User Not Found"
+
 
 # Apply model for cataract, crossed eye, bulk eye
-@app.route("/api/eye-abnormality", methods=['POST'])
+@app.route("/upload", methods=['POST'])
 def post_eye_abnormality():
     if request.method == 'POST':
         if 'file' not in request.files:
