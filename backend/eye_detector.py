@@ -20,7 +20,7 @@ def handle_image(image):
     eyes_pos = get_eyes(b64_image)
 
     if eyes_pos == []:
-        return "Can't find face"
+        return None, dict()
 
     # crop boundary consits of [(upper left left eye), (bottom right right eye), (upper left right eye), {bottom right tight eye}]
     crop_boundary = get_crop_boundary(eyes_pos)
@@ -63,7 +63,7 @@ def handle_image(image):
         else:
             result['crossed eye or cataract'] = 'Unlikely'
 
-    return result
+    return b64_image, result
 
 
 def get_crop_boundary(eyes_pos):
