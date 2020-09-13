@@ -1,8 +1,14 @@
 import pyrebase
+import requests
 import uuid
 from flask import *
 from backend.eye_detector import handle_image
 import base64
+
+# twilio
+from backend.twilio_credentials import account_sid, auth_token, twilio_cell
+from twilio.rest import Client
+from twilio.twiml.messaging_response import MessagingResponse
 
 # Authentication data for Firebase
 config = {
@@ -19,6 +25,9 @@ config = {
 firebase = pyrebase.initialize_app(config)
 
 db = firebase.database()
+
+# twilio config
+twilio_client = Client(account_sid, auth_token)
 
 # Start Flask app
 app = Flask(__name__)
@@ -101,8 +110,23 @@ def get_report():
             "analysis": user.get("analysis", None),
         }
 
+# send notification to the doctor when users upload picture
+
+
+def send_notification(phone_number, first_name, last_name):
+    patient_name = f'{first_name} {last_name}'
+
+    if phone_number != None:
+        twilio_client.messages.create(
+            body=f"Hi, {patient_name} just uploaded a picture. A report has been generated.",
+            from_=twilio_cell,
+            to=phone_number,
+        )
+    return 200
 
 # Apply model for cataract, crossed eye, bulk eye
+
+
 @ app.route("/upload", methods=['POST'])
 def post_eye_abnormality():
     body = request.form.to_dict(flat=False)
@@ -129,6 +153,10 @@ def post_eye_abnormality():
                 user['analysis'] = output
                 user['picture'] = base64.b64encode(b64_image).decode('utf-8')
                 db.child("users").child(key).set(user)
+
+                # notify doctor
+                send_notification("+18059007177", user.get('firstname',
+                                                           'no-first-name'), user.get('lastname', 'no-last-name'))
                 return output
             else:
                 return "Can't find an eye in the picture."
@@ -139,6 +167,12 @@ def allowed_file(filename) -> bool:
     _allowed_extensions = {'pdf', 'png', 'jpg', 'jpeg'}
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in _allowed_extensions
+
+
+@app.route("/send_report", methods=['POST'])
+def send_report():
+    # do something
+    return
 
 
 if __name__ == '__main__':
