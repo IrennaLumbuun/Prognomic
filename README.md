@@ -27,5 +27,5 @@ Doctor portal
 - Install requirements `pip3 install -r requirements.txt`
 - Run `Flask run`
 
-## Demo Link:
-- http://techack.pythonanywhere.com/
+# See our presentation
+https://www.youtube.com/watch?v=YtH51NCMRmU&feature=emb_logo **(back-end demo starts on minute 2:35)**
